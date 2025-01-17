@@ -67,6 +67,27 @@ df_lca$ngo_igo_bin <- ifelse(df_lca$affiliation == "Nongovernmental organization
                                df_lca$affiliation == "International organization",
                               1, 0)
 
+# create variable for local, national, international 
+
+df_lca$affiliation_international <- ifelse(df_lca$affiliation == "Nongovernmental organization (NGO)" |
+                               df_lca$affiliation == "International organization" |
+                                 df_lca$affiliation == "European Union and its agencies", 
+                             1, 0)
+
+df_lca$affiliation_local <- ifelse(df_lca$affiliation == "Local association" |
+                                 df_lca$affiliation == "Local or regional governmental institution", 
+                               1, 0)
+
+df_lca$affiliation_national <- ifelse(df_lca$affiliation == "National governmental institution", 
+                       1, 0)
+
+
+
+df_lca$encourage_repo_use <- ifelse(df_lca$Q6.2 == "Strongly agree" |
+                                      df_lca$Q6.2 == "Somewhat agree", 
+                                      1, 0)
+df_lca$strong_encourage_repo_use <- ifelse(df_lca$Q6.2 == "Strongly agree",
+                                    1, 0)
 
 # Create binary variables for each unique area of work
 df_lca <- df_lca %>%
@@ -93,7 +114,7 @@ df_lca$time_spent_with_data <- factor(df_lca$Q6.3, levels = c("Below 10%", "10% 
 df_lca$time_spent_with_data_numeric <- as.numeric(df_lca$time_spent_with_data) 
 
 # do you spent half of your time or more with data?
-df_lca$data_time_binary <- ifelse(df_lca$time_spent_with_data_numeric >= 4,
+df_lca$half_of_time_with_data <- ifelse(df_lca$time_spent_with_data_numeric >= 4,
                                   1, 0)
 
 
@@ -146,24 +167,22 @@ df_lca$EOV <- df_lca$Q6.9_2
 df_lca$EOV[df_lca$EOV==""] <- "Never"
 
 # Reorder the levels in increasing time order
-df_lca$EOV <- factor(df_lca$EOV, levels = c("Never", "Once", "Regularly", "Daily"))
+df_lca$EOV_factor <- factor(df_lca$EOV, levels = c("Never", "Once", "Regularly", "Daily"))
 
 table(df_lca$EOV)
 
-
-df_lca$eov_binary <- ifelse(df_lca$EOV == "Regularly" | df_lca$EOV == "Daily",1,0)
+df_lca$EOVs <- ifelse(df_lca$EOV_factor == "Regularly" | df_lca$EOV_factor == "Daily",1,0)
 
 df_lca$eov_binary 
 
 df_lca$EBV <- df_lca$Q6.9_1
 
 # Reorder the levels in increasing time order
-df_lca$EBV <- factor(df_lca$EBV, levels = c("Never", "Once", "Regularly", "Daily"))
+df_lca$EBV_factor <- factor(df_lca$EBV, levels = c("Never", "Once", "Regularly", "Daily"))
 
 table(df_lca$EBV)
 
-
-df_lca$ebv_binary <- ifelse(df_lca$EBV == "Regularly" | df_lca$EBV == "Daily",1,0)
+df_lca$EBVs <- ifelse(df_lca$EBV_factor == "Regularly" | df_lca$EBV_factor == "Daily",1,0)
 
 df_lca$ebv_binary 
 
@@ -171,9 +190,9 @@ df_lca$ebv_binary
 df_lca$emodnet <- df_lca$Q7.3_1 
 
 # Reorder the levels in increasing time order
-df_lca$emodnet <- factor(df_lca$emodnet, levels = c("Never", "Once", "Regularly", "Daily"))
+df_lca$emodnet_factor <- factor(df_lca$emodnet, levels = c("Never", "Once", "Regularly", "Daily"))
 
-df_lca$emodnet_binary <- ifelse(df_lca$emodnet == "Regularly" | df_lca$emodnet == "Daily",1,0)
+df_lca$emodnet <- ifelse(df_lca$emodnet_factor == "Regularly" | df_lca$emodnet_factor == "Daily",1,0)
 
 
 
@@ -183,9 +202,9 @@ df_lca$obis[df_lca$obis==""] <- "Never"
 
 
 # Reorder the levels in increasing time order
-df_lca$obis <- factor(df_lca$obis, levels = c("Never", "Once", "Regularly", "Daily"))
+df_lca$obis_factor <- factor(df_lca$obis, levels = c("Never", "Once", "Regularly", "Daily"))
 
-df_lca$obis_binary <- ifelse(df_lca$obis == "Regularly" | df_lca$obis == "Daily",1,0)
+df_lca$obis <- ifelse(df_lca$obis_factor == "Regularly" | df_lca$obis_factor == "Daily",1,0)
 
 
 
@@ -194,10 +213,10 @@ df_lca$gbif <- df_lca$Q7.3_3
 df_lca$gbif[df_lca$gbif==""] <- "Never"
 
 # Reorder the levels in increasing time order
-df_lca$gbif <- factor(df_lca$gbif, levels = c("Never", "Once", "Regularly", "Daily"))
+df_lca$gbif_factor <- factor(df_lca$gbif, levels = c("Never", "Once", "Regularly", "Daily"))
 
 
-df_lca$gbif_binary <- ifelse(df_lca$gbif == "Regularly" | df_lca$gbif == "Daily",1,0)
+df_lca$gbif <- ifelse(df_lca$gbif_factor == "Regularly" | df_lca$gbif_factor == "Daily",1,0)
 
 
 
@@ -206,9 +225,9 @@ df_lca$national[df_lca$national==""] <- "Never"
 
 
 # Reorder the levels in increasing time order
-df_lca$national <- factor(df_lca$national, levels = c("Never", "Once", "Regularly", "Daily"))
+df_lca$national_factor <- factor(df_lca$national, levels = c("Never", "Once", "Regularly", "Daily"))
 
-df_lca$nationalrepo_binary <- ifelse(df_lca$national == "Regularly" | df_lca$national == "Daily",1,0)
+df_lca$national_repos <- ifelse(df_lca$national_factor == "Regularly" | df_lca$national_factor == "Daily",1,0)
 
 
 
@@ -216,26 +235,26 @@ df_lca$project <- df_lca$Q7.3_5
 df_lca$project[df_lca$project==""] <- "Never"
 
 # Reorder the levels in increasing time order
-df_lca$project <- factor(df_lca$project, levels = c("Never", "Once", "Regularly", "Daily"))
+df_lca$project_factor <- factor(df_lca$project, levels = c("Never", "Once", "Regularly", "Daily"))
 
-df_lca$projectrepo_binary <- ifelse(df_lca$project == "Regularly" | df_lca$project == "Daily",1,0)
+df_lca$project_repos <- ifelse(df_lca$project_factor == "Regularly" | df_lca$project_factor == "Daily",1,0)
 
 
 #######  Q45 What type of biodiversity-related data do you use?
 
 df_lca <- df_lca %>%
   mutate(
-    geological_data = ifelse(grepl("Geological data", Q45), 1, 0),
-    biological_data = ifelse(grepl("Biological data", Q45), 1, 0),
-    socioeconomic_data = ifelse(grepl("Socio-economic data", Q45), 1, 0),
-    acoustic_data = ifelse(grepl("Acoustic data", Q45), 1, 0),
-    fishery_data = ifelse(grepl("Fishery data", Q45), 1, 0),
-    satellite_data = ifelse(grepl("Satelite data", Q45), 1, 0),
-    pollution_data = ifelse(grepl("Pollution data", Q45), 1, 0),
-    physical_data = ifelse(grepl("Physical data", Q45), 1, 0),
-    chemical_data = ifelse(grepl("Chemical data", Q45), 1, 0),
-    numeric_data = ifelse(grepl("Numeric data", Q45), 1, 0),
-    visual_data = ifelse(grepl("Visual data", Q45), 1, 0)
+    geological = ifelse(grepl("Geological data", Q45), 1, 0),
+    biological = ifelse(grepl("Biological data", Q45), 1, 0),
+    socioeconomic = ifelse(grepl("Socio-economic data", Q45), 1, 0),
+    acoustic = ifelse(grepl("Acoustic data", Q45), 1, 0),
+    fishery = ifelse(grepl("Fishery data", Q45), 1, 0),
+    satellite = ifelse(grepl("Satelite data", Q45), 1, 0),
+    pollution = ifelse(grepl("Pollution data", Q45), 1, 0),
+    physical = ifelse(grepl("Physical data", Q45), 1, 0),
+    chemical = ifelse(grepl("Chemical data", Q45), 1, 0),
+    numeric = ifelse(grepl("Numeric data", Q45), 1, 0),
+    visual = ifelse(grepl("Visual data", Q45), 1, 0)
   )
 
 
@@ -331,30 +350,36 @@ df_lca <- df_lca %>%
 # Create binary variables for each challenge, including combined responses
 df_lca <- df_lca %>%
   mutate(
-    challenge_access = ifelse(str_detect(Q6.7_1, "Most of the time|Always|About half the time"), 1, 0),
-    challenge_data_availability = ifelse(str_detect(Q6.7_2, "Most of the time|Always|About half the time"), 1, 0),
-    challenge_data_existence = ifelse(str_detect(Q6.7_3, "Most of the time|Always|About half the time"), 1, 0),
-    challenge_data_knowledge = ifelse(str_detect(Q6.7_4, "Most of the time|Always|About half the time"), 1, 0),
-    challenge_technical = ifelse(str_detect(Q6.7_9, "Most of the time|Always|About half the time"), 1, 0),
-    challenge_data_timing = ifelse(str_detect(Q6.7_10, "Most of the time|Always|About half the time"), 1, 0),
-    challenge_data_cost = ifelse(str_detect(Q6.7_11, "Most of the time|Always|About half the time"), 1, 0),
-    challenge_data_consistency = ifelse(str_detect(Q6.7_8, "Most of the time|Always|About half the time"), 1, 0)
+    access = ifelse(str_detect(Q6.7_1, "Most of the time|Always|About half the time"), 1, 0),
+    data_availability = ifelse(str_detect(Q6.7_2, "Most of the time|Always|About half the time"), 1, 0),
+    data_existence = ifelse(str_detect(Q6.7_3, "Most of the time|Always|About half the time"), 1, 0),
+    data_knowledge = ifelse(str_detect(Q6.7_4, "Most of the time|Always|About half the time"), 1, 0),
+    technical = ifelse(str_detect(Q6.7_9, "Most of the time|Always|About half the time"), 1, 0),
+    data_timing = ifelse(str_detect(Q6.7_10, "Most of the time|Always|About half the time"), 1, 0),
+    data_cost = ifelse(str_detect(Q6.7_11, "Most of the time|Always|About half the time"), 1, 0),
+    data_consistency = ifelse(str_detect(Q6.7_8, "Most of the time|Always|About half the time"), 1, 0),
+    lack_metadata = ifelse(str_detect(Q6.7_6, "Most of the time|Always|About half the time"), 1, 0),
+    data_interoperable = ifelse(str_detect(Q6.7_5, "Most of the time|Always|About half the time"), 1, 0)
   )
 
 
 # Create a vector of all variable names to recode
 variables <- c(
-  "data_time_binary", "data_literacy_binary", "eov_binary", "ebv_binary",
-  "emodnet_binary", "obis_binary", "gbif_binary", "nationalrepo_binary", "projectrepo_binary",
-  "uses_biodiversity_data", "produces_biodiversity_data", "manages_biodiversity_data",
-  "geological_data", "biological_data", "socioeconomic_data", "acoustic_data", "fishery_data", 
-  "satellite_data", "pollution_data", "physical_data", "chemical_data", "numeric_data", "visual_data",
+  "half_of_time_with_data", 
+  "uses_biodiversity_data",
+  "produces_biodiversity_data", 
+  "manages_biodiversity_data", 
+  "EOVs", "EBVs",
+  "emodnet", "obis", "gbif", "national_repos", "project_repos",
+  "produces_biodiversity_data", "manages_biodiversity_data",
+  "geological", "biological", "socioeconomic", "acoustic", "fishery", 
+  "satellite", "pollution", "physical", "chemical", "numeric", "visual",
   "reporting", "spatial_planning", "eia", "conservation", "policy_eval", "policymaking",
   "scientific_research", "communication", "education", "decision_making", "protected_area_mgmt",
   "indicator_dev", "product_dev", "maps", "scenarios", "models", "graphs", 
-  "tools_integrate_data", "other", "challenge_access", "challenge_data_availability", 
-  "challenge_data_existence", "challenge_data_knowledge", "challenge_technical",
-  "challenge_data_timing", "challenge_data_cost", "challenge_data_consistency",
+  "tools_integrate_data", "other", "access", "data_availability", 
+  "data_existence", "data_knowledge", "technical",
+  "data_timing", "data_cost", "data_consistency", "lack_metadata", "data_interoperable",
   "marine_ecosystem", "coastal_ecosystem", "freshwater_ecosystem", "terrestrial_ecosystem",
   "southern_europe", "western_europe", "northern_america", "northern_europe"
   

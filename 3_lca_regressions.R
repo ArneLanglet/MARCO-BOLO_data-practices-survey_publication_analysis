@@ -93,20 +93,8 @@ print(results)
 df_lca$class_1 <- ifelse(df_lca$class_membership == 1, 1, 0)
 df_lca$class_2 <- ifelse(df_lca$class_membership == 2, 1, 0)
 df_lca$class_3 <- ifelse(df_lca$class_membership == 3, 1, 0)
-df_lca$class_4 <- ifelse(df_lca$class_membership == 4, 1, 0)
 
 
-logit_model <- lm(class_1 ~ policy_bin 
-                  + scientific_bin 
-                  + data_literacy_binary
-                  + marine_ecosystem 
-                  + coastal_ecosystem
-                  + freshwater_ecosystem 
-                  + terrestrial_ecosystem
-                  + southern_europe
-                  + western_europe 
-                  + northern_europe 
-                  + northern_america, data = df_lca)
 
 logit_model1 <- lm(class_1 ~ 
                      data_literacy_binary
@@ -114,6 +102,9 @@ logit_model1 <- lm(class_1 ~
                    + scientific_bin 
                    + business_bin
                    + ngo_igo_bin
+                   + affiliation_local
+                   + affiliation_national
+                   + affiliation_international
                    + academia_research
                    + public_engagement 
                    + product_development
@@ -129,7 +120,9 @@ logit_model1 <- lm(class_1 ~
                    + southern_europe
                    + western_europe 
                    + northern_europe 
-                   + northern_america, data = df_lca)
+                   + northern_america
+                   + encourage_repo_use
+                   + strong_encourage_repo_use, data = df_lca)
 
 summary(logit_model1)
 
@@ -139,6 +132,9 @@ logit_model2 <- lm(class_2 ~
                    + scientific_bin 
                    + business_bin
                    + ngo_igo_bin
+                   + affiliation_local
+                   + affiliation_national
+                   + affiliation_international
                    + academia_research
                    + public_engagement 
                    + product_development
@@ -154,7 +150,9 @@ logit_model2 <- lm(class_2 ~
                    + southern_europe
                    + western_europe 
                    + northern_europe 
-                   + northern_america, data = df_lca)
+                   + northern_america
+                   + encourage_repo_use
+                   + strong_encourage_repo_use, data = df_lca)
 
 summary(logit_model2)
 
@@ -164,6 +162,9 @@ logit_model3 <- lm(class_3 ~
                    + scientific_bin 
                    + business_bin
                    + ngo_igo_bin
+                   + affiliation_local
+                   + affiliation_national
+                   + affiliation_international
                    + academia_research
                    + public_engagement 
                    + product_development
@@ -179,7 +180,9 @@ logit_model3 <- lm(class_3 ~
                    + southern_europe
                    + western_europe 
                    + northern_europe 
-                   + northern_america, data = df_lca)
+                   + northern_america
+                   + encourage_repo_use
+                   + strong_encourage_repo_use, data = df_lca)
 
 
 
@@ -187,43 +190,22 @@ logit_model3 <- lm(class_3 ~
 # View the results
 summary(logit_model3)
 
-logit_model4 <- lm(class_4 ~ 
-                     data_literacy_binary
-                   + policy_bin 
-                   + scientific_bin 
-                   + business_bin
-                   + ngo_igo_bin
-                   + academia_research
-                   + public_engagement 
-                   + product_development
-                   + conservation_management 
-                   + data_management 
-                   + management_administration 
-                   + law_policy_decision
-                   + media_communication
-                   + marine_ecosystem 
-                   + coastal_ecosystem
-                   + freshwater_ecosystem 
-                   + terrestrial_ecosystem
-                   + southern_europe
-                   + western_europe 
-                   + northern_europe 
-                   + northern_america, data = df_lca)
 
-# View the results
-summary(logit_model4)
 
 # Load the stargazer package
 library(stargazer)
 
 # Create a combined table with all three models
-stargazer(logit_model1, logit_model2, logit_model3, logit_model4, 
+stargazer(logit_model1, logit_model2, logit_model3, 
           type = "text",
           title = "Regression Results for Latent Class Membership",
           align = TRUE,
-          dep.var.labels = c("Class 1 - Applied users", "Class 2 - Scientific data provider+manage", "Class 3 - Pure data managers", "Class 4 - Pure research"),
+          dep.var.labels = c("Class 1 - Scientific data providers", "Class 2 - Applied users", "Class 3 - Data managers and engagers"),
           covariate.labels = c("Data Literacy", "Policy Bin", "Scientific Bin", "Business Bin", 
-                               "NGO/IGO Bin", "Academia/Research", "Public Engagement", 
+                               "NGO/IGO Bin", "Affiliation local",
+                               "Affiliation national",
+                               "Affiliation international",
+                               "Academia/Research", "Public Engagement", 
                                "Product Development", "Conservation Management", 
                                "Data Management", "Management/Administration", 
                                "Law/Policy/Decision", "Media/Communication", 
@@ -233,3 +215,4 @@ stargazer(logit_model1, logit_model2, logit_model3, logit_model4,
                                "Northern Europe", "Northern America"),
           star.cutoffs = c(0.05, 0.01, 0.001),
           no.space = TRUE)
+
