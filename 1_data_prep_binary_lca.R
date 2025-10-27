@@ -42,7 +42,7 @@ df <- dataset_raw %>% filter(Progress >= 70)
 ## first step: find and delete NAs
 
 df <- df %>%
-  mutate_at(vars(Q4.2, Q6.3, Q45, Q7.3_1, Q6.9_1, Q6.10, Q2.3), ~replace(., . == "", NA))
+  mutate_at(vars(Q4.2, Q5.2, Q6.2, Q6.3, Q45, Q7.3_1, Q6.9_1, Q6.10, Q2.3), ~replace(., . == "", NA))
 
 df_lca <- df %>%
   drop_na(Q4.2, Q6.3, Q45, Q7.3_1, Q6.9_1, Q6.10, Q2.3)
@@ -83,10 +83,10 @@ df_lca$affiliation_national <- ifelse(df_lca$affiliation == "National government
 
 
 
-df_lca$encourage_repo_use <- ifelse(df_lca$Q6.2 == "Strongly agree" |
+df_lca$encourage_data_use <- ifelse(df_lca$Q6.2 == "Strongly agree" |
                                       df_lca$Q6.2 == "Somewhat agree", 
                                       1, 0)
-df_lca$strong_encourage_repo_use <- ifelse(df_lca$Q6.2 == "Strongly agree",
+df_lca$strong_encourage_data_use <- ifelse(df_lca$Q6.2 == "Strongly agree",
                                     1, 0)
 
 # Create binary variables for each unique area of work
@@ -351,7 +351,7 @@ df_lca <- df_lca %>%
 df_lca <- df_lca %>%
   mutate(
     access = ifelse(str_detect(Q6.7_1, "Most of the time|Always|About half the time"), 1, 0),
-    data_availability = ifelse(str_detect(Q6.7_2, "Most of the time|Always|About half the time"), 1, 0),
+    data_gettinghold = ifelse(str_detect(Q6.7_2, "Most of the time|Always|About half the time"), 1, 0),
     data_existence = ifelse(str_detect(Q6.7_3, "Most of the time|Always|About half the time"), 1, 0),
     data_knowledge = ifelse(str_detect(Q6.7_4, "Most of the time|Always|About half the time"), 1, 0),
     technical = ifelse(str_detect(Q6.7_9, "Most of the time|Always|About half the time"), 1, 0),
@@ -359,7 +359,9 @@ df_lca <- df_lca %>%
     data_cost = ifelse(str_detect(Q6.7_11, "Most of the time|Always|About half the time"), 1, 0),
     data_consistency = ifelse(str_detect(Q6.7_8, "Most of the time|Always|About half the time"), 1, 0),
     lack_metadata = ifelse(str_detect(Q6.7_6, "Most of the time|Always|About half the time"), 1, 0),
-    data_interoperable = ifelse(str_detect(Q6.7_5, "Most of the time|Always|About half the time"), 1, 0)
+    data_interoperable = ifelse(str_detect(Q6.7_5, "Most of the time|Always|About half the time"), 1, 0),
+    data_interpretation= ifelse(str_detect(Q6.7_7, "Most of the time|Always|About half the time"), 1, 0)
+    
   )
 
 
@@ -377,11 +379,12 @@ variables <- c(
   "reporting", "spatial_planning", "eia", "conservation", "policy_eval", "policymaking",
   "scientific_research", "communication", "education", "decision_making", "protected_area_mgmt",
   "indicator_dev", "product_dev", "maps", "scenarios", "models", "graphs", 
-  "tools_integrate_data", "other", "access", "data_availability", 
-  "data_existence", "data_knowledge", "technical",
-  "data_timing", "data_cost", "data_consistency", "lack_metadata", "data_interoperable",
-  "marine_ecosystem", "coastal_ecosystem", "freshwater_ecosystem", "terrestrial_ecosystem",
-  "southern_europe", "western_europe", "northern_america", "northern_europe"
+  "tools_integrate_data", "other", "access", "data_gettinghold", 
+  #"data_existence", "data_knowledge", 
+  "technical",
+  "data_timing", "data_cost", "data_consistency", "lack_metadata", "data_interoperable", "data_interpretation" 
+  #, "marine_ecosystem", "coastal_ecosystem", "freshwater_ecosystem", "terrestrial_ecosystem",
+  # "southern_europe", "western_europe", "northern_america", "northern_europe"
   
 )
 length(variables)
@@ -399,13 +402,14 @@ binary_data <- df_lca %>% dplyr::select(all_of(variables))
 cor_matrix <- cor(binary_data, use = "complete.obs")
 
 # Define threshold for strong correlation
-threshold <- 0.7
+threshold <- 0.5
 
 # Identify and print strong correlations (both positive and negative)
 strong_correlations <- (cor_matrix > threshold | cor_matrix < -threshold) & (cor_matrix != 1)
 print("Strong correlations (absolute value > 0.8):")
 print(cor_matrix * strong_correlations)
 
+corr <- as_data_frame(print(cor_matrix * strong_correlations))
 
 # identify NAs
 

@@ -23,7 +23,10 @@ library(flextable)
 library(officer)
 
 
+rm(list = ls())
+gc()
 df_lca <- read.csv("//share.univie.ac.at/envpol/13_Horizon Europe_MARCO-BOLO/8_Publication/df_lca.csv")
+
 
 ## select variables for LCA
 
@@ -37,7 +40,7 @@ f <- cbind(
   
   # type of data block
   geological, 
-  #biological_data - taken out because all have responded this. brings no differentiation
+  #biological_data # - taken out because all have responded this. brings no differentiation
   socioeconomic,
   acoustic, 
   fishery, 
@@ -80,16 +83,21 @@ f <- cbind(
   tools_integrate_data,
   
   # challenges block
-  access, 
-  data_availability, 
-  #challenge_data_existence, 
-  #challenge_data_knowledge, - both taken out because almost no-one answered these
-  technical,
-  data_timing,
-  data_cost,
   data_consistency,
   lack_metadata,
-  data_interoperable  
+  data_interpretation,
+  access, 
+  data_interoperable 
+  ############## only five most experienced challenges taken
+ # data_availability 
+  #challenge_data_knowledge, - both taken out because almost no-one answered these
+  #challenge_data_existence, 
+ # technical, - taken out because brings no differentiation
+ # data_timing,
+  #data_cost, - both taken out because almost no-one answered these
+
+
+
   ) ~ 1
 
 
@@ -166,7 +174,12 @@ lca_model <- poLCA(f, data = df_lca, nclass = 3, maxiter = 5000, graphs = FALSE)
 
 
 
+
 save(lca_model, file = "lca_model.RData")
+
+rm(list = ls())
+gc()
+dev.off()
 load("lca_model.RData")
 
 
@@ -232,8 +245,8 @@ item_probs_df$Item <- factor(item_probs_df$Item,
                                         "scientific_research", "communication", "education", "decision_making", "protected_area_mgmt",
                                         "indicator_dev", "product_dev",
                                         "maps", "scenarios", "models", "graphs", "tools_integrate_data",
-                                        "access", "data_availability",  "technical", "lack_metadata", "data_interoperable",
-                                        "data_timing", "data_cost", "data_consistency"))
+                                        "access", "data_interpretation",   "lack_metadata", "data_interoperable",
+                                         "data_consistency"))
 
 
 
@@ -249,8 +262,8 @@ item_probs_df$Group <- ifelse(item_probs_df$Item %in% c("half_of_time_with_data"
                                                    ifelse(item_probs_df$Item %in% c( "reporting", "spatial_planning", "eia", "conservation", "policy_eval", "indicator_dev", "product_dev",
                                                                                      "scientific_research", "communication", "education", "decision_making", "protected_area_mgmt"), "Uses of data",       
                                                           ifelse(item_probs_df$Item %in% c("maps", "scenarios", "models", "graphs", "tools_integrate_data"), "Products needed",       
-                                                                 ifelse(item_probs_df$Item %in% c("access", "data_availability",  "technical",
-                                                                   "data_timing", "data_cost", "data_consistency",  "lack_metadata", "data_interoperable"), "Challenges experienced", 
+                                                                 ifelse(item_probs_df$Item %in% c("access", 
+                                                                   "data_interpretation",  "data_consistency",  "lack_metadata", "data_interoperable"), "Challenges experienced", 
                                                                                         "Other"))))))
 
 
@@ -373,7 +386,7 @@ print(final_with_legend)
 
 
 # Create the plot with all IGC facets in one row
-ggplot(item_probs_df, aes(x = Item, y = Probability, color = Category, group = Category)) +
+plot <- ggplot(item_probs_df, aes(x = Item, y = Probability, color = Category, group = Category)) +
   geom_line(size = 1.2) +  # Slightly thicker lines for better visibility
   geom_point(size = 3) +   # Larger points for readability
   labs(
@@ -404,5 +417,9 @@ ggplot(item_probs_df, aes(x = Item, y = Probability, color = Category, group = C
     nrow = 2  # Split into two rows for better readability
   )
 
+
+png("figure2_neu.png")
+print(plot)
+dev.off()
 
 
