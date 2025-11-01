@@ -11,27 +11,23 @@ require(reshape2)
 require(countrycode)
 library(knitr)
 library(dplyr)
-
 library(tidytext)
 # Load the package
 library(poLCA)
-
 library(nnet)
-
-
 library(flextable)
 library(officer)
 
 
 rm(list = ls())
 gc()
-df_lca <- read.csv("//share.univie.ac.at/envpol/13_Horizon Europe_MARCO-BOLO/8_Publication/df_lca.csv")
+df_lca <- read.csv(path_lca)
 
 
 ## select variables for LCA
 
 f <- cbind(
-  #data work block
+  #Level of Data Engagement block
   half_of_time_with_data, 
   #data_literacy_binary,  - taken out because this is an explanatory factor
   uses_biodiversity_data, 
@@ -203,29 +199,12 @@ item_probs_df <- bind_rows(item_probs_list, .id = "ItemID")
 str(item_probs_df)
 
 
-# Load required library
+# Load required library for plotting
 library(ggplot2)
 
 # Convert 'Category' to a factor for better control over colors
 item_probs_df$Category <- factor(item_probs_df$Category)
 item_probs_df$Probability <- item_probs_df$'Pr(2)'
-
-
-
-
-
-# Create the line plot
-ggplot(item_probs_df, aes(x = Item, y = Probability, color = Category, group = Category)) +
-  geom_line(size = 1) +
-  geom_point(size = 2) +  # Optional: Add points for better readability
-  labs(title = "Item Response Probabilities (Pr(2)) by Class",
-       x = "Item",
-       y = "Probability (Pr(2))",
-       color = "Class") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        plot.title = element_text(hjust = 0.5, face = "bold", size = 16))
-
 
 
 
@@ -252,7 +231,7 @@ item_probs_df$Item <- factor(item_probs_df$Item,
 
 # Add a new column to specify groups
 item_probs_df$Group <- ifelse(item_probs_df$Item %in% c("half_of_time_with_data", "uses_biodiversity_data",
-                                                        "manages_biodiversity_data", "produces_biodiversity_data"), "Data work", 
+                                                        "manages_biodiversity_data", "produces_biodiversity_data"), "Level of data engagement", 
                                      ifelse(item_probs_df$Item %in% c( "EOVs", "EBVs", "emodnet",
                                                                        "obis", "gbif",
                                                                        "national_repos", "project_repos"), 
@@ -267,7 +246,7 @@ item_probs_df$Group <- ifelse(item_probs_df$Item %in% c("half_of_time_with_data"
                                                                                         "Other"))))))
 
 
-item_probs_df$Group <- factor(item_probs_df$Group, levels = c("Data work",
+item_probs_df$Group <- factor(item_probs_df$Group, levels = c("Level of data engagement",
                                                               "Types of data","Uses of data", "Use of ess.var. and repo.", 
                                                               "Products needed", "Challenges experienced"))
 
@@ -289,37 +268,6 @@ item_probs_df$Category <- factor(item_probs_df$Category)
 # Load ggforce for improved faceting options
 library(ggforce)
 
-# Plot with ggplot2, using faceting to differentiate groups and ordered items
-ggplot(item_probs_df, aes(x = Item, y = Probability, color = Category, group = Category)) +
-  geom_line(size = 1.2) +  # Slightly thicker lines for better visibility
-  geom_point(size = 3) +   # Larger points for readability
-  labs(
-    title = "Item Response Probabilities by Class",
-    x = "Item",
-    y = "Probability",
-    color = "Class"
-  ) +
-  theme_minimal() +
-  theme(
-    # Axis text adjustments
-    axis.text.x = element_text(angle = 45, hjust = 1, size = 14, face = "bold"),  # Larger and angled x-axis text
-    axis.text.y = element_text(size = 14, face = "bold"),  # Larger y-axis text
-    # Title adjustments
-    plot.title = element_text(hjust = 0.5, face = "bold", size = 18),  # Centered and bold title
-    # Legend adjustments
-    legend.title = element_text(size = 16, face = "bold"),  # Larger and bold legend title
-    legend.text = element_text(size = 14),  # Larger legend text
-    # Facet spacing and layout adjustments
-    strip.text = element_text(size = 14, face = "bold"),  # Larger facet labels
-    panel.spacing = unit(0.5, "lines"),  # Increase spacing between facets
-    # Add space for axis labels and avoid clipping
-    plot.margin = margin(20, 20, 20, 20)  # Add margin around the plot
-  ) +
-  facet_wrap(
-    ~Group, 
-    scales = "free_x", 
-    nrow = 1
-  )
 
 
 
@@ -368,24 +316,10 @@ plots <- item_probs_df %>%
 facet_widths <- item_counts$ItemCount / sum(item_counts$ItemCount) # Proportional widths
 facet_layout <- length(plots) %/% 2 + length(plots) %% 2  # Calculate rows for two rows
 
-# Combine plots with a shared legend
-library(cowplot)
-final_plot <- plot_grid(
-  plotlist = plots,
-  nrow = 2,  # Two rows for increased readability
-  rel_widths = facet_widths,
-  align = "hv"  # Ensure equal axis scales
-)
-
-# Add legend back to the plot
-legend <- get_legend(plots[[1]] + theme(legend.position = "bottom"))
-final_with_legend <- plot_grid(final_plot, legend, ncol = 1, rel_heights = c(0.9, 0.1))
-
-# Display the final plot
-print(final_with_legend)
 
 
-# Create the plot with all IGC facets in one row
+
+# Create the plot 
 plot <- ggplot(item_probs_df, aes(x = Item, y = Probability, color = Category, group = Category)) +
   geom_line(size = 1.2) +  # Slightly thicker lines for better visibility
   geom_point(size = 3) +   # Larger points for readability
@@ -417,8 +351,10 @@ plot <- ggplot(item_probs_df, aes(x = Item, y = Probability, color = Category, g
     nrow = 2  # Split into two rows for better readability
   )
 
+plot
 
-png("figure2_neu.png")
+
+png("figure2.png")
 print(plot)
 dev.off()
 

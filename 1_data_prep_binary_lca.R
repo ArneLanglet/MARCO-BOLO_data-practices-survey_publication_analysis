@@ -1,5 +1,7 @@
-## manipulate variables to fit binary LCA
+## curate survey data to fit binary LCA model
 
+
+# load necessary packages
 library(tidyverse)
 library(ggplot2)
 require(ggthemes)
@@ -19,23 +21,28 @@ library(poLCA)
 
 
 ## variables to be used in LCA: 
-###### Q4.2 what applies to you? produce, manage, use data? (7 different categories)
-###### Q6.10 On a scale from 1 to 5, how would you rate your data literacy? - good: one category only
-###### Q6.3 how much time spent with data? - good: one category only
-#   Q45 What type of biodiversity-related data do you use?- too many combinations
-######   Q6.1 For what purpose do you use biodiversity data? - binary: including policy or not
-######   Q6.9 To what extent do you use Essential Variables in your work? ### ebv & eov 
-######   Q7.3 How often do you use the following data repositories? ### could be indexed with essential variables
-######   Q6.6 What data products and tools do you need most urgently? # 4 categories  Needs maps, not tools to integrate data Needs tools to integrate data, not maps
-# Needs both maps and tools to integrate data , Needs neither
-#   Q6.7 What challenges do you experience when using biodiversity data?
-#   
+###### Q4.2 what applies to you? produce, manage, use data? 
+###### Q6.3 how much time spent with data? 
+
+######   Q45 What type of biodiversity-related data do you use?
+######   Q6.1 For what purpose do you use biodiversity data? 
+
+######   Q6.9 To what extent do you use Essential Variables in your work? 
+######   Q7.3 How often do you use the following data repositories? 
+
+######   Q6.6 What data products and tools do you need most urgently?
+######   Q6.7 What challenges do you experience when using biodiversity data?
 
 
-dataset_raw <- read.csv("//share.univie.ac.at/envpol/13_Horizon Europe_MARCO-BOLO/6_Research/Survey/CSV_TABLE/CoP+Survey_011223.csv")
+dataset_raw <- read.csv(path_data)
+
+## format date
 dataset_raw$created <- as.POSIXct(dataset_raw$StartDate, format = '%Y-%m-%d %H:%M:%S')
 dataset_raw$date<- as.Date(dataset_raw$EndDate, format = '%Y-%m-%d %H:%M:%S')
 dataset_raw$Progress <- as.numeric(dataset_raw$Progress)
+
+
+## we consider for the final dataset those responses that have filled out 70% or more of the survey
 df <- dataset_raw %>% filter(Progress >= 70)
 
 
@@ -47,49 +54,46 @@ df <- df %>%
 df_lca <- df %>%
   drop_na(Q4.2, Q6.3, Q45, Q7.3_1, Q6.9_1, Q6.10, Q2.3)
 
-	
-df_lca$affiliation <- df_lca$Q2.3
-df_lca$area_of_work <- df_lca$Q2.4
 
+# Recode variables into binary variables
+
+
+###### $Q2.3 What is your affiliation
+
+df_lca$affiliation <- df_lca$Q2.3
+
+
+## create policy affiliation yes/no variable
 df_lca$policy_bin <- ifelse(df_lca$affiliation == "National governmental institution" | 
                               df_lca$affiliation == "Local or regional governmental institution" |
                               df_lca$affiliation == "European Union and its agencies", 
                             1,0)
 
+## create scientific affiliation yes/no variable
 df_lca$scientific_bin <- ifelse(df_lca$affiliation == "University" |
                                   df_lca$affiliation == "Other academic research institution",
                                 1, 0)
 
+## create business affiliation yes/no variable
 df_lca$business_bin <- ifelse(df_lca$affiliation == "Business and Industry",
                      1, 0)
 
+## create NGO/IGO affiliation yes/no variable
 df_lca$ngo_igo_bin <- ifelse(df_lca$affiliation == "Nongovernmental organization (NGO)" |
                                df_lca$affiliation == "International organization",
                               1, 0)
 
-# create variable for local, national, international 
 
-df_lca$affiliation_international <- ifelse(df_lca$affiliation == "Nongovernmental organization (NGO)" |
-                               df_lca$affiliation == "International organization" |
-                                 df_lca$affiliation == "European Union and its agencies", 
-                             1, 0)
-
-df_lca$affiliation_local <- ifelse(df_lca$affiliation == "Local association" |
-                                 df_lca$affiliation == "Local or regional governmental institution", 
-                               1, 0)
-
-df_lca$affiliation_national <- ifelse(df_lca$affiliation == "National governmental institution", 
-                       1, 0)
-
-
-
+## create "your organization encourages data use" yes/no variable
 df_lca$encourage_data_use <- ifelse(df_lca$Q6.2 == "Strongly agree" |
                                       df_lca$Q6.2 == "Somewhat agree", 
                                       1, 0)
-df_lca$strong_encourage_data_use <- ifelse(df_lca$Q6.2 == "Strongly agree",
-                                    1, 0)
 
-# Create binary variables for each unique area of work
+###### Q2.4 What is your area of work?
+
+df_lca$area_of_work <- df_lca$Q2.4
+
+## Create binary variables for each unique area of work
 df_lca <- df_lca %>%
   mutate(
     academia_research = ifelse(grepl("Academia, research and education", area_of_work), 1, 0),
@@ -105,7 +109,7 @@ df_lca <- df_lca %>%
 
 
 
-###### Q6.3 how much time spent with data? - good: one category only
+###### Q6.3 how much time spent with data? 
 # Reorder the levels in increasing time order
 df_lca$time_spent_with_data <- factor(df_lca$Q6.3, levels = c("Below 10%", "10% to 30%", "30% to 50%", "50% to 70%", "Most of my time"))
 
@@ -120,7 +124,7 @@ df_lca$half_of_time_with_data <- ifelse(df_lca$time_spent_with_data_numeric >= 4
 
 
 
-###### Q6.10 On a scale from 1 to 5, how would you rate your data literacy? - good: one category only
+###### Q6.10 On a scale from 1 to 5, how would you rate your data literacy? 
 
 # Reorder the levels from bad to good
 df_lca$data_literacy <- factor(df_lca$Q6.10, levels = c("Extremely bad", "Somewhat bad", "Neither good nor bad", "Somewhat good", "Extremely good"))
@@ -136,12 +140,15 @@ df_lca$data_literacy_binary <- ifelse(df_lca$data_literacy_numeric >= 4,
 
 
 
-###### Q4.2 what applies to you? produce, manage, use data? (7 different categories)
+###### Q4.2 what applies to you? produce, manage, use data? 
 
 unique(df_lca$Q4.2)
-library(dplyr)
 
-# Assuming df_lca is your dataframe
+## create three binary variables for "use", "produce" and "manage" biodiversity data
+# Adds a column uses_biodiversity_data that equals 1 if the row contains "I use biodiversity data" and 0 otherwise.
+# Adds a column produces_biodiversity_data that equals 1 if the row contains "I produce biodiversity data" and 0 otherwise.
+# Adds a column manages_biodiversity_data that equals 1 if the row contains "I manage biodiversity data" and 0 otherwise.
+
 df_lca <- df_lca %>%
   mutate(
     uses_biodiversity_data = ifelse(grepl("I use biodiversity data", Q4.2), 1, 0),
@@ -149,13 +156,6 @@ df_lca <- df_lca %>%
     manages_biodiversity_data = ifelse(grepl("I manage biodiversity data", Q4.2), 1, 0)
   )
 
-# Check results
-head(df_lca)
-
-# This code: 
-# Adds a column uses_biodiversity_data that equals 1 if the row contains "I use biodiversity data" and 0 otherwise.
-# Adds a column produces_biodiversity_data that equals 1 if the row contains "I produce biodiversity data" and 0 otherwise.
-# Adds a column manages_biodiversity_data that equals 1 if the row contains "I manage biodiversity data" and 0 otherwise.
 
 
 ###### Q6.9 To what extent do you use Essential Variables in your work?
@@ -242,6 +242,8 @@ df_lca$project_repos <- ifelse(df_lca$project_factor == "Regularly" | df_lca$pro
 
 #######  Q45 What type of biodiversity-related data do you use?
 
+# create a binary variable for each of the responses yes/no
+
 df_lca <- df_lca %>%
   mutate(
     geological = ifelse(grepl("Geological data", Q45), 1, 0),
@@ -259,8 +261,10 @@ df_lca <- df_lca %>%
 
 
 
+#######  Q6.1 For what purposes do you use biodiversity monitoring data?
 
-# Assuming df is your data frame
+# create a binary variable for each of the responses yes/no
+
 df_lca <- df_lca %>%
   mutate(
     reporting = ifelse(grepl("Reporting", Q6.1), 1, 0),
@@ -278,13 +282,11 @@ df_lca <- df_lca %>%
     indicator_dev = ifelse(grepl("Indicator development", Q6.1), 1, 0)
   )
 
-# Verify results
-head(df_lca)
 
+#######  Q6.6 Which tools do you need?
 
+# create a binary variable for each of the responses yes/no
 
-
-# Assuming df is your data frame
 df_lca <- df_lca %>%
   mutate(
     tools_integrate_data = ifelse(grepl("Tools to integrate data", Q6.6), 1, 0),
@@ -296,7 +298,10 @@ df_lca <- df_lca %>%
   )
 
 
-#######  ecosystem
+#######  $Q2.5 In which ecosystem do you work? 
+
+# create a binary variable for each of the responses yes/no
+
 df_lca$ecosystem <- df_lca$Q2.5
 df_lca <- df_lca %>% mutate(
     marine_ecosystem = ifelse(grepl("Marine", Q2.5), 1, 0),
@@ -304,9 +309,7 @@ df_lca <- df_lca %>% mutate(
     freshwater_ecosystem = ifelse(grepl("Freshwater", Q2.5), 1, 0),
     terrestrial_ecosystem = ifelse(grepl("Terrestrial", Q2.5), 1, 0))
 
-#### country
-
-
+#### Q2.2country
 
 # Define regions for countries
 df_lca$region <- ifelse(df_lca$Q2.2 %in% c("France", "Germany", "Belgium", "Austria", "Netherlands", "Luxembourg", "Switzerland", "United Kingdom of Great Britain and Northern Ireland", "Ireland"), "Western Europe",
@@ -324,8 +327,6 @@ df_lca$region <- ifelse(df_lca$Q2.2 %in% c("France", "Germany", "Belgium", "Aust
 
 
 
-# Check the results
-table(df_lca$region)
 
 # Define binary variables for each region based on the existing 'region' variable
 df_lca <- df_lca %>%
@@ -347,7 +348,10 @@ df_lca <- df_lca %>%
 
 
 
-# Create binary variables for each challenge, including combined responses
+#######  Q6.7 What challenges do you encounter?
+
+# create a binary variable for each of the responses when encountered half of the time or more yes/no
+
 df_lca <- df_lca %>%
   mutate(
     access = ifelse(str_detect(Q6.7_1, "Most of the time|Always|About half the time"), 1, 0),
@@ -389,7 +393,7 @@ variables <- c(
 )
 length(variables)
 
-# Recode 0 to 1 and 1 to 2
+# Recode 0 to 1 and 1 to 2 for LCA it requires 1 and 2
 df_lca <- df_lca %>%
   mutate(across(all_of(variables), ~ ifelse(. == 0, 1, 2)))
 
