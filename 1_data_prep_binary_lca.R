@@ -1,61 +1,74 @@
-## curate survey data to fit binary LCA model
+## ============================================================
+## Curate survey data for binary Latent Class Analysis (LCA)
+## ============================================================
 
-
-# load necessary packages
+## ------------------------------------------------------------
+## Load required packages
+## ------------------------------------------------------------
 library(tidyverse)
-library(ggplot2)
-require(ggthemes)
-library(kableExtra)
-library(knitr)
-require(gridExtra)
-require(scales)
-require(reshape2)
-require(countrycode)
-library(knitr)
 library(dplyr)
-library(writexl)
+library(ggplot2)
+library(ggthemes)
+library(gridExtra)
+library(scales)
+library(reshape2)
+library(countrycode)
+library(knitr)
+library(kableExtra)
 library(tidytext)
-# Load the package
+library(writexl)
 library(poLCA)
 
+## ------------------------------------------------------------
+## Read raw data
+## ------------------------------------------------------------
+dataset_raw <- read.csv(path_data)
 
 
-## variables to be used in LCA: 
+## Variables to be used in LCA: 
 ###### Q4.2 what applies to you? produce, manage, use data? 
 ###### Q6.3 how much time spent with data? 
-
 ######   Q45 What type of biodiversity-related data do you use?
 ######   Q6.1 For what purpose do you use biodiversity data? 
-
 ######   Q6.9 To what extent do you use Essential Variables in your work? 
 ######   Q7.3 How often do you use the following data repositories? 
-
 ######   Q6.6 What data products and tools do you need most urgently?
 ######   Q6.7 What challenges do you experience when using biodiversity data?
 
 
-dataset_raw <- read.csv(path_data)
+## ------------------------------------------------------------
+## Basic formatting and cleaning
+## ------------------------------------------------------------
 
-## format date
-dataset_raw$created <- as.POSIXct(dataset_raw$StartDate, format = '%Y-%m-%d %H:%M:%S')
-dataset_raw$date<- as.Date(dataset_raw$EndDate, format = '%Y-%m-%d %H:%M:%S')
+# Convert timestamps and progress to appropriate formats
+dataset_raw$created  <- as.POSIXct(dataset_raw$StartDate, format = "%Y-%m-%d %H:%M:%S")
+dataset_raw$date     <- as.Date(dataset_raw$EndDate,   format = "%Y-%m-%d %H:%M:%S")
 dataset_raw$Progress <- as.numeric(dataset_raw$Progress)
 
+# Keep only respondents who completed at least 70% of the survey
+df <- dataset_raw %>%
+  filter(Progress >= 70)
 
-## we consider for the final dataset those responses that have filled out 70% or more of the survey
-df <- dataset_raw %>% filter(Progress >= 70)
+## ------------------------------------------------------------
+## Handle missing values in key variables
+## ------------------------------------------------------------
 
-
-## first step: find and delete NAs
-
+# Replace empty strings with NA for selected survey questions
 df <- df %>%
-  mutate_at(vars(Q4.2, Q5.2, Q6.2, Q6.3, Q45, Q7.3_1, Q6.9_1, Q6.10, Q2.3), ~replace(., . == "", NA))
+  mutate_at(
+    vars(Q4.2, Q5.2, Q6.2, Q6.3, Q45, Q7.3_1, Q6.9_1, Q6.10, Q2.3),
+    ~ replace(., . == "", NA)
+  )
 
+# Drop observations with missing values in core LCA variables
 df_lca <- df %>%
   drop_na(Q4.2, Q6.3, Q45, Q7.3_1, Q6.9_1, Q6.10, Q2.3)
 
 
-# Recode variables into binary variables
+## ============================================================
+## Recode variables into binary indicators
+## ============================================================
+
 
 
 ###### $Q2.3 What is your affiliation
@@ -369,8 +382,13 @@ df_lca <- df_lca %>%
   )
 
 
+
+## ============================================================
+## Prepare final dataset for LCA
+## ============================================================
+
 # Create a vector of all variable names to recode
-variables <- c(
+lca_variables <- c(
   "half_of_time_with_data", 
   "uses_biodiversity_data",
   "produces_biodiversity_data", 
@@ -391,15 +409,23 @@ variables <- c(
   # "southern_europe", "western_europe", "northern_america", "northern_europe"
   
 )
-length(variables)
+length(lca_variables)
 
-# Recode 0 to 1 and 1 to 2 for LCA it requires 1 and 2
+
+regression_variables <- c("affiliation", "area_of_work", "region", "ecosystem", "marine_ecosystem",
+                          "freshwater_ecosystem", "coastal_ecosystem", "encourage_data_use" , "data_literacy_binary")
+
+# Recode binary variables from {0,1} to {1,2} as required by poLCA
+
 df_lca <- df_lca %>%
-  mutate(across(all_of(variables), ~ ifelse(. == 0, 1, 2)))
+  mutate(across(all_of(lca_variables), ~ ifelse(. == 0, 1, 2)))
 
+## ------------------------------------------------------------
+## Check correlation matrix 
+## ------------------------------------------------------------
 
 # Select only the binary variables for correlation
-binary_data <- df_lca %>% dplyr::select(all_of(variables))
+binary_data <- df_lca %>% dplyr::select(all_of(lca_variables))
 
 
 # Compute the correlation matrix
@@ -415,12 +441,24 @@ print(cor_matrix * strong_correlations)
 
 corr <- as_data_frame(print(cor_matrix * strong_correlations))
 
-# identify NAs
+
+
+## ------------------------------------------------------------
+## Keep only variables used or created in this script
+## ------------------------------------------------------------
+
+#  Identify NAs if any 
 
 na_summary <- sapply(df_lca, function(x) sum(is.na(x)))
 print(na_summary)
 
+df_lca <- df_lca %>%
+  dplyr::select(all_of(c(lca_variables, regression_variables)))
 
+
+## ------------------------------------------------------------
+## Save cleaned LCA-ready dataset
+## ------------------------------------------------------------
 
 write.csv(df_lca, "df_lca.csv")
 write_xlsx(df_lca, "df_lca.xlsx")

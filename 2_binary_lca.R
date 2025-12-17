@@ -1,28 +1,35 @@
-### LCA using binary-coded variables
+############################################################
+### Latent Class Analysis (LCA) – Binary-coded variables
+############################################################
 
+## ---- Packages ----
 library(tidyverse)
-library(ggplot2)
-require(ggthemes)
-library(kableExtra)
-library(knitr)
-require(gridExtra)
-require(scales)
-require(reshape2)
-require(countrycode)
-library(knitr)
-library(dplyr)
-library(tidytext)
-# Load the package
 library(poLCA)
 library(nnet)
+
+library(ggplot2)
+library(ggforce)
+
 library(flextable)
 library(officer)
 
+library(knitr)
+library(kableExtra)
 
+
+
+############################################################
+## ---- Housekeeping ----
 rm(list = ls())
 gc()
-df_lca <- read.csv(path_lca)
 
+############################################################
+## ---- Load data ----
+df_lca <- read.csv("df_lca.csv")
+
+
+############################################################
+## ---- Specify LCA model formula ----
 
 ## select variables for LCA
 
@@ -85,20 +92,83 @@ f <- cbind(
   access, 
   data_interoperable 
   ############## only five most experienced challenges taken
- # data_availability 
+  # data_availability 
   #challenge_data_knowledge, - both taken out because almost no-one answered these
   #challenge_data_existence, 
- # technical, - taken out because brings no differentiation
- # data_timing,
+  # technical, - taken out because brings no differentiation
+  # data_timing,
   #data_cost, - both taken out because almost no-one answered these
+  
+  
+  
+) ~ 1
 
 
 
-  ) ~ 1
+lca_variables <- c(
+  
+  ## Level of data engagement
+  "half_of_time_with_data",
+  "uses_biodiversity_data",
+  "produces_biodiversity_data",
+  "manages_biodiversity_data",
+  
+  ## Types of data
+  "geological",
+  "socioeconomic",
+  "acoustic",
+  "fishery",
+  "satellite",
+  "pollution",
+  "physical",
+  "chemical",
+  "numeric",
+  "visual",
+  
+  ## Uses of data
+  "reporting",
+  "spatial_planning",
+  "eia",
+  "conservation",
+  "policy_eval",
+  "policymaking",
+  "scientific_research",
+  "communication",
+  "education",
+  "decision_making",
+  "protected_area_mgmt",
+  "indicator_dev",
+  "product_dev",
+  
+  ## Essential variables & repositories
+  "EOVs",
+  "EBVs",
+  "emodnet",
+  "obis",
+  "gbif",
+  "national_repos",
+  "project_repos",
+  
+  ## Tools needed
+  "maps",
+  "scenarios",
+  "models",
+  "graphs",
+  "tools_integrate_data",
+  
+  ## Challenges experienced
+  "data_consistency",
+  "lack_metadata",
+  "data_interpretation",
+  "access",
+  "data_interoperable"
+)
 
 
 
-############### run LCA. First 2-6 classes to compare model fit
+
+############################################################
+## ---- Model comparison: 2–6 classes ----
 
 # Prepare an empty data frame to store model fit results
 model_results <- data.frame(
@@ -143,6 +213,9 @@ for (n in 2:6) {
 }
 
 
+############################################################
+## ---- Export model fit table ----
+
 # Create the flextable from model_results
 ft <- flextable(model_results) %>%
   set_header_labels(
@@ -163,20 +236,28 @@ doc <- read_docx() %>%
 print(doc, target = "fitted_binary_LCA_Model_Results.docx")
 
 
+############################################################
+## ---- Final model (3 classes) ----
 
-####################### 3 class model seems best
 
 lca_model <- poLCA(f, data = df_lca, nclass = 3, maxiter = 5000, graphs = FALSE)
 
+
+# careful: polCA model calculation produces a different version of the same model every time it runs (it changes the order of the classes)
+# you may have to rerun the previous command until the classes 1,2 and 3 are in the correct order (as in the publication)
+# it should be: 
+# Estimated class population shares 
+# 0.4535 0.2584 0.2881 
 
 
 
 save(lca_model, file = "lca_model.RData")
 
-rm(list = ls())
-gc()
-dev.off()
+
 load("lca_model.RData")
+
+############################################################
+## ---- Item response probabilities figure ----
 
 
 # Extract item response probabilities
@@ -225,25 +306,25 @@ item_probs_df$Item <- factor(item_probs_df$Item,
                                         "indicator_dev", "product_dev",
                                         "maps", "scenarios", "models", "graphs", "tools_integrate_data",
                                         "access", "data_interpretation",   "lack_metadata", "data_interoperable",
-                                         "data_consistency"))
+                                        "data_consistency"))
 
 
 
 # Add a new column to specify groups
 item_probs_df$Group <- ifelse(item_probs_df$Item %in% c("half_of_time_with_data", "uses_biodiversity_data",
                                                         "manages_biodiversity_data", "produces_biodiversity_data"), "Level of data engagement", 
-                                     ifelse(item_probs_df$Item %in% c( "EOVs", "EBVs", "emodnet",
-                                                                       "obis", "gbif",
-                                                                       "national_repos", "project_repos"), 
-                                            "Use of ess.var. and repo.", 
-                                            ifelse(item_probs_df$Item %in% c("geological","acoustic", "fishery", 
-                                                                             "satellite", "pollution", "physical", "chemical", "numeric", "visual"), "Types of data",       
-                                                   ifelse(item_probs_df$Item %in% c( "reporting", "spatial_planning", "eia", "conservation", "policy_eval", "indicator_dev", "product_dev",
-                                                                                     "scientific_research", "communication", "education", "decision_making", "protected_area_mgmt"), "Uses of data",       
-                                                          ifelse(item_probs_df$Item %in% c("maps", "scenarios", "models", "graphs", "tools_integrate_data"), "Products needed",       
-                                                                 ifelse(item_probs_df$Item %in% c("access", 
-                                                                   "data_interpretation",  "data_consistency",  "lack_metadata", "data_interoperable"), "Challenges experienced", 
-                                                                                        "Other"))))))
+                              ifelse(item_probs_df$Item %in% c( "EOVs", "EBVs", "emodnet",
+                                                                "obis", "gbif",
+                                                                "national_repos", "project_repos"), 
+                                     "Use of ess.var. and repo.", 
+                                     ifelse(item_probs_df$Item %in% c("geological","acoustic", "fishery", 
+                                                                      "satellite", "pollution", "physical", "chemical", "numeric", "visual"), "Types of data",       
+                                            ifelse(item_probs_df$Item %in% c( "reporting", "spatial_planning", "eia", "conservation", "policy_eval", "indicator_dev", "product_dev",
+                                                                              "scientific_research", "communication", "education", "decision_making", "protected_area_mgmt"), "Uses of data",       
+                                                   ifelse(item_probs_df$Item %in% c("maps", "scenarios", "models", "graphs", "tools_integrate_data"), "Products needed",       
+                                                          ifelse(item_probs_df$Item %in% c("access", 
+                                                                                           "data_interpretation",  "data_consistency",  "lack_metadata", "data_interoperable"), "Challenges experienced", 
+                                                                 "Other"))))))
 
 
 item_probs_df$Group <- factor(item_probs_df$Group, levels = c("Level of data engagement",
@@ -353,8 +434,14 @@ plot <- ggplot(item_probs_df, aes(x = Item, y = Probability, color = Category, g
 
 plot
 
+ggsave(
+  filename = "figure2.png",
+  plot     = plot,
+  width    = 14,     # inches – wide like RStudio zoom
+  height   = 8,      # inches – two facet rows fit comfortably
+  dpi      = 300     # print-quality resolution
+)
 
-png("figure2.png")
 print(plot)
 dev.off()
 
